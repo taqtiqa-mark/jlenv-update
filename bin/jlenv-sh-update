@@ -11,7 +11,7 @@ for arg; do
   -v | --verbose ) verbose=true ;;
   -q | --quiet | --silent ) quiet=true ;;
   * )
-    echo "command rbenv update $@"
+    echo "command jlenv update $@"
     exit ;;
   esac
 done
@@ -30,15 +30,15 @@ colorize() {
 
 case "$shell" in
   fish )
-    echo "if command rbenv update $@"
-      if [ -z "$quiet" ]; then colorize "Reloading rbenv\n"; fi
-      if [ -z "$noop" ];  then echo "  source (rbenv init -|psub)"; fi
+    echo "if command jlenv update $@"
+      if [ -z "$quiet" ]; then colorize "Reloading jlenv\n"; fi
+      if [ -z "$noop" ];  then echo "  source (jlenv init -|psub)"; fi
       if [ -z "$quiet" ]; then colorize " | " "done\n"; fi
     echo "end" ;;
   * )
-    echo "if command rbenv update $@; then"
-      if [ -z "$quiet" ]; then colorize "Reloading rbenv\n"; fi
-      if [ -z "$noop" ];  then echo "  eval \"\$(rbenv init -)\";"; fi
+    echo "if command jlenv update $@; then"
+      if [ -z "$quiet" ]; then colorize "Reloading jlenv\n"; fi
+      if [ -z "$noop" ];  then echo "  eval \"\$(jlenv init -)\";"; fi
       if [ -z "$quiet" ]; then colorize " | " "done\n"; fi
     echo "fi;" ;;
 esac
