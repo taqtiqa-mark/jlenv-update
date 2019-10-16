@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-if [ -d test/libs ]; then
-
+if [ -d test/libs/bats ]; then
+  echo "Previosly setup by run"
 else
   # Use --force to override the gitignore for test libs.
   git submodule add --force https://github.com/bats-core/bats-core.git test/libs/bats
@@ -10,6 +10,6 @@ else
   git submodule add --force https://github.com/ztombol/bats-file test/libs/bats-file
   git submodule add --force https://github.com/jasonkarns/bats-mock test/libs/bats-mock
 
-  git submodule update --init --recursive 
+  git submodule update --init --recursive --force
 
 fi

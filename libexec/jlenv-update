@@ -64,7 +64,7 @@ for arg; do
     echo "v1.0.0"
     exit
     ;;
-  -q | --quiet | --silent ) 
+  -q | --quiet ) 
     quiet=true
     verbose=false
     export _GIT_VERBOSE=''
