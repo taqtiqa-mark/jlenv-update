@@ -1,6 +1,6 @@
 [submodule "test/libs/jlenv"]
 	path = test/libs/jlenv
-	url = https://github.com/jlenv/jlenv
+	url = https://github.com/jlenv/jlenv.git
 [submodule "test/libs/bats"]
 	path = test/libs/bats
 	url = https://github.com/bats-core/bats-core
