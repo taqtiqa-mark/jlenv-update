@@ -19,9 +19,6 @@ if [ "${JLENV_ROOT:=/}" != "${JLENV_TEST_DIR}/root" ]; then
   export JLENV_ROOT="${JLENV_TEST_DIR}/root"
   export HOME="${JLENV_TEST_DIR}/home"
 
-  #export INSTALL_HOOK="${BATS_TEST_DIRNAME}/../etc/jlenv.d/install/autoalias.bash"
-  #export UNINSTALL_HOOK="${BATS_TEST_DIRNAME}/../etc/jlenv.d/uninstall/autoalias.bash"
-
   PATH=/usr/bin:/bin:/usr/sbin:/sbin
   PATH="${JLENV_TEST_DIR}/bin:$PATH"
   PATH="${BATS_TEST_DIRNAME}/libexec:$PATH"
@@ -30,20 +27,7 @@ if [ "${JLENV_ROOT:=/}" != "${JLENV_TEST_DIR}/root" ]; then
   PATH="${BATS_TEST_DIRNAME}/libs/jlenv/test/libexec:$PATH"
   PATH="${JLENV_ROOT}/shims:$PATH"
   export PATH
-  
-  # To test upgrade we need jlenv root to be jlenv git clone
-  # mkdir -p ${JLENV_ROOT}
-  # pushd ${JLENV_ROOT}
-  #   git init
-  #   # git remote rm origin
-  #   git remote add origin https://github.com/jlenv/jlenv.git
-  #   git fetch --depth 1 origin master
-  #   git checkout master
-  #   git branch --set-upstream-to=origin/master master
-  # popd
 
-  # jlenv-prefix requires and .julia-version file for some reason.
-  # echo 1.0.0 >${BATS_TEST_DIRNAME}/.julia-version
 fi
 
 teardown() {
@@ -102,11 +86,6 @@ EOF
   done
 }
 
-# Create to allow jlenv-prefix to work.  That logic needs to be reworked.
-# the create-version code requires semver as the name
-# mkdir -p "$JLENV_TEST_DIR/root/versions/system/bin"
-# mkdir -p "$JLENV_TEST_DIR/root/versions/system/include"
-
 # Check a given version string vJ.K.L or J.K.L is installed.
 # copares to JULIA_VERSION_STRING from the julia header file 
 # include/julia/julia_version.h
@@ -142,110 +121,3 @@ check_version_installed() {
 read_version_installed(){
   $1
 }
-
-
-# # Creates test aliases
-# create_alias() {
-#   local alias="$1"
-#   local version="$2"
-
-#   mkdir -p "$JLENV_ROOT/versions"
-#   ln -nfs "$JLENV_ROOT/versions/$version" "$JLENV_ROOT/versions/$alias"
-# }
-
-# assert_alias_version alias version
-
-# assert_alias_version() {
-#   if [ ! -f $JLENV_ROOT/versions/$1/RELEASE.txt ]
-#   then
-#     echo "Versions:"
-#     (cd $JLENV_ROOT/versions ; ls -l)
-#   fi
-#   assert_equal "$2" "$(cat "$JLENV_ROOT/versions/$1/RELEASE.txt" 2>&1)"
-# }
-
-# assert_alias_missing() {
-#   if [ -f $JLENV_ROOT/versions/$1/RELEASE.txt ]
-#   then
-#     assert_equal "no-version" "$(cat "$JLENV_ROOT/versions/$1/RELEASE.txt" 2>&1)"
-#   fi
-# }
-
-
-# assert_success() {
-#   if [ "$status" -ne 0 ]; then
-#     flunk "output "$1" : command failed with exit status $status"
-#   elif [ "$#" -gt 0 ]; then
-#     assert_output "$1"
-#   fi
-# }
-
-# assert_failure() {
-#   if [ "$status" -eq 0 ]; then
-#     flunk "expected failed exit status"
-#   elif [ "$#" -gt 0 ]; then
-#     assert_output "$1"
-#   fi
-# }
-
-# assert_equal() {
-#   if [ "$1" != "$2" ]; then
-#     { echo "expected: $1"
-#       echo "actual:   $2"
-#     } | flunk
-#   fi
-# }
-
-# assert_output() {
-#   local expected
-#   if [ $# -eq 0 ]; then expected="$(cat -)"
-#   else expected="$1"
-#   fi
-#   assert_equal "$expected" "$output"
-# }
-
-# assert_line() {
-#   if [ "$1" -ge 0 ] 2>/dev/null; then
-#     assert_equal "$2" "${lines[$1]}"
-#   else
-#     local line
-#     for line in "${lines[@]}"; do
-#       if [ "$line" = "$1" ]; then return 0; fi
-#     done
-#     flunk "expected line \`$1'"
-#   fi
-# }
-
-# assert_line_starts_with() {
-#   if [ "$1" -ge 0 ] 2>/dev/null; then
-#     assert_equal "$2" "${lines[$1]}"
-#   else
-#     local line
-#     for line in "${lines[@]}"; do
-#       if [ -n "${line#${1}}" ]; then return 0; fi
-#     done
-#     flunk "expected line \`$1'"
-#   fi
-# }
-
-# refute_line() {
-#   if [ "$1" -ge 0 ] 2>/dev/null; then
-#     local num_lines="${#lines[@]}"
-#     if [ "$1" -lt "$num_lines" ]; then
-#       flunk "output has $num_lines lines"
-#     fi
-#   else
-#     local line
-#     for line in "${lines[@]}"; do
-#       if [ "$line" = "$1" ]; then
-#         flunk "expected to not find line \`$line'"
-#       fi
-#     done
-#   fi
-# }
-
-# assert() {
-#   if ! "$@"; then
-#     flunk "failed: $@"
-#   fi
-# }
