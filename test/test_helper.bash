@@ -1,7 +1,17 @@
 #!/usr/bin/env bash
 
 set -e
-[ -n "${JLENV_DEBUG}" ] && set -x
+case ${JLENV_DEBUG:-1} in
+  0) # Enable tracing
+    set -x
+    ;;
+  1) # Disable tracing
+    set +x
+    ;;
+  *) # Disable tracing
+    set +x
+    ;;
+esac
 
 # Load the semver utility code
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
@@ -18,6 +28,12 @@ if [ "${JLENV_ROOT:=/}" != "${JLENV_TEST_DIR}/root" ]; then
   echo "Setting up test environment...."
   export JLENV_ROOT="${JLENV_TEST_DIR}/root"
   export HOME="${JLENV_TEST_DIR}/home"
+  
+  # Install bats to the test location.  This is next added to path.
+  # These files are in .gitignore
+  pushd ${BATS_TEST_DIRNAME}/libs/bats
+    ./install.sh ${BATS_TEST_DIRNAME}/libexec
+  popd
 
   PATH=/usr/bin:/bin:/usr/sbin:/sbin
   PATH="${JLENV_TEST_DIR}/bin:$PATH"

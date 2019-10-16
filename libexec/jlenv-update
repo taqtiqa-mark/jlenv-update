@@ -7,23 +7,36 @@
 # Executes a git pull for each plugin.
 # Failures are collected and reported at the end.
 #
-#    --quite    Quite mode. Prints no output.
-#    --noop     Print would-be command only. Command is not executed.
-#    --silent   Quite mode. Prints no output.
-#    --verbose  Verbose mode. Prints a header for each plugin.
+#  --quite|silent  Quite mode. Prints no output.
+#  --noop          Print would-be command only. Command is not executed.
+#  --verbose       Verbose mode. Prints a header for each plugin.
 #
 # For more information on jlenv-update, see:
 # https://github.com/jlenv/jlenv-update#readme
 
 
 set -e
-[ -n "$JLENV_DEBUG" ] && set -x
+case ${JLENV_DEBUG:-1} in
+  0) # Enable tracing
+    set -x
+    ;;
+  1) # Disable tracing
+    set +x
+    ;;
+  *) # Disable tracing
+    set +x
+    ;;
+esac
 
-# Parse command line flags
-# Provide jlenv completions
+# Parse command line flags. Provide jlenv completions
+# Two git commands and their flags are used: 
+# - remote --verbose
+# - pull   --verbose --quiet --dry-run
+# Set the flag values  
 noop=""
 verbose=""
 quiet=""
+# Argument handling is broken
 for arg; do
   case "$arg" in
   --complete )
@@ -33,42 +46,51 @@ for arg; do
     echo --verbose
     echo --version
     exit ;;
-  -n | --noop ) 
+  -n | --noop )
+    quiet=false 
     noop=true 
-    #hift
+    export _GIT_QUIET=''
+    export _GIT_NOOP='--dry-run'
+    shift
     ;;
   -v | --verbose ) 
-    verbose=true 
+    verbose=true
+    quiet=false
+    export _GIT_VERBOSE='--verbose'
+    export _GIT_QUIET=''
     shift
     ;;
   --version )
-    echo "jlenv-update 1.0.0"
+    echo "v1.0.0"
     exit
     ;;
   -q | --quiet | --silent ) 
-    quiet=true 
+    quiet=true
+    verbose=false
+    export _GIT_VERBOSE=''
+    export _GIT_QUIET='--quiet'
     shift
     ;;
   --help | help )
     exec jlenv-help update
     exit
     ;;
-  * )
+  ""  | -*  )
     jlenv-help --usage update >&2
     exit 1 ;;
   esac
 done
 
-# Set colored output for TTY
-GRAY=""
+# Set colored output for TTY. Solarixed scheme.
+GREEN=""
 RED=""
 YELLOW=""
 NORMAL=""
 
 if [ -t 1 ]; then
-  GRAY="\033[1;30m"
-  RED="\033[0;31m"
-  YELLOW="\033[0;33m"
+  GREEN="\033[38;5;64m" 
+  RED="\033[38;5;160m"
+  YELLOW="\033[38;5;136m"
   NORMAL='\033[0m'
 fi
 
@@ -77,54 +99,55 @@ failed_plugins=''
 trap "exit 1" INT
 
 
-# Helper functions
+# Helper functions.
 indent_output() {
   while read -r data; do
-    printf " ${GRAY}|${NORMAL}  %s\n" "$data"
+    printf " ${GREEN}|${NORMAL}  %s\n" "$data"
   done
 }
 
 print_colored() {
-  if [ -z "$quiet" ]; then
-    printf "${GRAY}%s${NORMAL}\n" "$1"
+  if [ "$quiet" != "true" ]; then
+    printf "${GREEN}%s${NORMAL}\n" "$1"
   fi
 }
 
 _git() {
-  if [ -n "$noop" ]; then
-    # print would-be command
-    echo git "$@" | indent_output
-  elif [ -n "$quiet" ]; then
+  if [ "$noop" == "true" ]; then
+    # pull has --dry-run and remote is a noop. So execute command.
+    print_colored "git \"$@\"" | indent_output
+    command git "$@" | indent_output
+  elif [ "$quiet" = "true" ]; then
     # mute stdout and stderr
     command git "$@" &>/dev/null
-  elif [ -n "$verbose" ]; then
+  elif [ "$verbose" = "true" ]; then
     # indent stdout and stderr
+    export GIT_CURL_VERBOSE=1 
     command git "$@" 2>&1 | indent_output
   else
     # mute stdout, indent stderr
+    export GIT_CURL_VERBOSE=0
     command git "$@" 2>&1 >/dev/null | indent_output
   fi
 }
 
 is_jlenv_git_repo() {
-  cd $JLENV_ROOT
-    git remote -v 2>/dev/null | grep 'jlenv\|julia-build'
+  # cd $JLENV_ROOT
+    git remote ${_GIT_VERBOSE} 2>/dev/null | grep 'jlenv\|julia-build'
 }
 
 jlenv_update() {
   if is_jlenv_git_repo; then
     print_colored "Updating $1"
-    _git pull --no-rebase --ff
+    _git pull ${_GIT_VERBOSE} ${_GIT_QUIET} ${_GIT_NOOP} --no-rebase --ff
   else
     print_colored "Skipping $1; not an jlenv git repo"
   fi
 }
 
+#####################################################################
 # Main script
-if [ -n "$noop" ] && [ -n "$quiet" ]; then
-  quiet=""
-  print_colored "Both --noop and --quiet given; ignoring --quiet" >&2
-fi
+#####################################################################
 
 cd "$(dirname "$(which jlenv)")"
 
@@ -134,13 +157,13 @@ jlenv_update jlenv
 # Loop over installed plugins.
 shopt -s nullglob
 for plugin in "$JLENV_ROOT"/plugins/*; do
-  if [ -n "$verbose" ]; then
-    header="===[$plugin]==================================================================="
-    header="${header:0:72}"
-    header="${header/[/[${YELLOW}}"
-    header="${header/]/${GRAY}]}"
-    echo -e "${GRAY}${header}${NORMAL}"
-  fi
+  # if [ "$verbose" = "true" ]; then
+  #   header="===[$plugin]==================================================================="
+  #   header="${header:0:72}"
+  #   header="${header/[/[${YELLOW}}"
+  #   header="${header/]/${GREEN}]}"
+  #   echo -e "${GREEN}${header}${NORMAL}"
+  # fi
 
   pushd "$plugin" >/dev/null
     #jlenv_update "$(basename "$plugin")" || failed_plugins="$failed_plugins $plugin"
@@ -149,6 +172,9 @@ for plugin in "$JLENV_ROOT"/plugins/*; do
 done
 shopt -u nullglob
 
+unset _GIT_QUIET
+unset _GIT_VERBOSE
+unset _GIT_NOOP
 # if [ -n "$failed_plugins" ]; then
 #   if [ -n "$noop" ]; then
 #     # print would-be command
