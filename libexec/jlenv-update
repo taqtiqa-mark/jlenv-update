@@ -1,0 +1,167 @@
+#!/usr/bin/env bash
+#
+# Summary: Updates to latest version of jlenv and plugins using git.
+#
+# Usage: jlenv update [--noop|--verbose|--quiet|--silent|--version|--help]
+#
+# Executes a git pull for each plugin.
+# Failures are collected and reported at the end.
+#
+#    --quite    Quite mode. Prints no output.
+#    --noop     Print would-be command only. Command is not executed.
+#    --silent   Quite mode. Prints no output.
+#    --verbose  Verbose mode. Prints a header for each plugin.
+#
+# For more information on jlenv-update, see:
+# https://github.com/jlenv/jlenv-update#readme
+
+
+set -e
+[ -n "$JLENV_DEBUG" ] && set -x
+
+# Parse command line flags
+# Provide jlenv completions
+noop=""
+verbose=""
+quiet=""
+for arg; do
+  case "$arg" in
+  --complete )
+    echo --help | help
+    echo --noop
+    echo --quiet
+    echo --verbose
+    echo --version
+    exit ;;
+  -n | --noop ) 
+    noop=true 
+    #hift
+    ;;
+  -v | --verbose ) 
+    verbose=true 
+    shift
+    ;;
+  --version )
+    echo "jlenv-update 1.0.0"
+    exit
+    ;;
+  -q | --quiet | --silent ) 
+    quiet=true 
+    shift
+    ;;
+  --help | help )
+    exec jlenv-help update
+    exit
+    ;;
+  * )
+    jlenv-help --usage update >&2
+    exit 1 ;;
+  esac
+done
+
+# Set colored output for TTY
+GRAY=""
+RED=""
+YELLOW=""
+NORMAL=""
+
+if [ -t 1 ]; then
+  GRAY="\033[1;30m"
+  RED="\033[0;31m"
+  YELLOW="\033[0;33m"
+  NORMAL='\033[0m'
+fi
+
+failed_plugins=''
+
+trap "exit 1" INT
+
+
+# Helper functions
+indent_output() {
+  while read -r data; do
+    printf " ${GRAY}|${NORMAL}  %s\n" "$data"
+  done
+}
+
+print_colored() {
+  if [ -z "$quiet" ]; then
+    printf "${GRAY}%s${NORMAL}\n" "$1"
+  fi
+}
+
+_git() {
+  if [ -n "$noop" ]; then
+    # print would-be command
+    echo git "$@" | indent_output
+  elif [ -n "$quiet" ]; then
+    # mute stdout and stderr
+    command git "$@" &>/dev/null
+  elif [ -n "$verbose" ]; then
+    # indent stdout and stderr
+    command git "$@" 2>&1 | indent_output
+  else
+    # mute stdout, indent stderr
+    command git "$@" 2>&1 >/dev/null | indent_output
+  fi
+}
+
+is_jlenv_git_repo() {
+  cd $JLENV_ROOT
+    git remote -v 2>/dev/null | grep 'jlenv\|julia-build'
+}
+
+jlenv_update() {
+  if is_jlenv_git_repo; then
+    print_colored "Updating $1"
+    _git pull --no-rebase --ff
+  else
+    print_colored "Skipping $1; not an jlenv git repo"
+  fi
+}
+
+# Main script
+if [ -n "$noop" ] && [ -n "$quiet" ]; then
+  quiet=""
+  print_colored "Both --noop and --quiet given; ignoring --quiet" >&2
+fi
+
+cd "$(dirname "$(which jlenv)")"
+
+# Update jlenv first.  Then proceed to update plugins.
+jlenv_update jlenv
+
+# Loop over installed plugins.
+shopt -s nullglob
+for plugin in "$JLENV_ROOT"/plugins/*; do
+  if [ -n "$verbose" ]; then
+    header="===[$plugin]==================================================================="
+    header="${header:0:72}"
+    header="${header/[/[${YELLOW}}"
+    header="${header/]/${GRAY}]}"
+    echo -e "${GRAY}${header}${NORMAL}"
+  fi
+
+  pushd "$plugin" >/dev/null
+    #jlenv_update "$(basename "$plugin")" || failed_plugins="$failed_plugins $plugin"
+    jlenv_update "$(basename "$plugin")"
+  popd >/dev/null
+done
+shopt -u nullglob
+
+# if [ -n "$failed_plugins" ]; then
+#   if [ -n "$noop" ]; then
+#     # print would-be command
+#     echo -e "${RED}FAILED IN:${failed_plugins}${NORMAL}" | indent_output
+#   elif [ -n "$quiet" ]; then
+#     # mute stdout and stderr
+#     echo -e "${RED}FAILED IN:${failed_plugins}${NORMAL}" &>/dev/null
+#   elif [ -n "$verbose" ]; then
+#     # indent stdout and stderr
+#     echo -e "${RED}FAILED IN:${failed_plugins}${NORMAL}" 2>&1 | indent_output
+#   else
+#     # mute stdout, indent stderr
+#     echo -e "${RED}FAILED IN:${failed_plugins}${NORMAL}" 2>&1 >/dev/null | indent_output
+#   fi
+#   exit 1
+# fi

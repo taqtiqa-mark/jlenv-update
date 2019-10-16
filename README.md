@@ -1,9 +1,29 @@
+# jlenv-each: Update jlenv and all installed plugins
+
 This [jlenv](http://jlenv.github.io/jlenv) plugin adds the `jlenv update`
-command that updated jlenv and all installed plugins.
+command that updates jlenv and all installed plugins.
 
 ## Installation
 
-Simply clone the repository into the plugins directory:
+To install jlenv-update, clone this repository into your jlenv plugins directory.
 
-    mkdir -p "$(jlenv root)/plugins"
-    git clone https://github.com/rkh/jlenv-update.git "$(jlenv root)/plugins/jlenv-update"
+```bash
+mkdir -p "$(jlenv root)/plugins"
+git clone https://github.com/jlenv/jlenv-update.git "$(jlenv root)/plugins/jlenv-update"
+```
+
+## Usage
+
+```bash
+jlenv help update
+```
+
+## Version History
+
+**1.0.0** (October 13, 2019)
+
+* Initial public release for Julia.
+
+## License
+
+Released under the MIT license. See `LICENSE` for details.

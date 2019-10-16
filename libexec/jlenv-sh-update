@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -e
-[ -n "$RBENV_DEBUG" ] && set -x
+[ -n "$JLENV_DEBUG" ] && set -x
 
-shell="$(basename "${RBENV_SHELL:-$SHELL}")"
+shell="$(basename "${JLENV_SHELL:-$SHELL}")"
 
 # Parse command line flags
 for arg; do
