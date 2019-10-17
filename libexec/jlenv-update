@@ -142,7 +142,7 @@ jlenv_update() {
 # Main script
 #####################################################################
 
-cd "$(dirname "$(which jlenv)")"
+cd "$(dirname "$(command -v jlenv)")"
 
 # Update jlenv first.  Then proceed to update plugins.
 jlenv_update jlenv
