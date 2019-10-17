@@ -1,7 +1,5 @@
 # jlenv-update: Update jlenv and all installed plugins
 
-
-
 This [jlenv](http://jlenv.github.io/jlenv) plugin adds the `jlenv update`
 command that updates jlenv and all installed plugins.
 
