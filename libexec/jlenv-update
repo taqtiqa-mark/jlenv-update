@@ -83,21 +83,14 @@ done
 
 # Set colored output for TTY. Solarixed scheme.
 GREEN=""
-RED=""
-YELLOW=""
 NORMAL=""
 
 if [ -t 1 ]; then
   GREEN="\033[38;5;64m" 
-  RED="\033[38;5;160m"
-  YELLOW="\033[38;5;136m"
   NORMAL='\033[0m'
 fi
 
-failed_plugins=''
-
 trap "exit 1" INT
-
 
 # Helper functions.
 indent_output() {
@@ -115,7 +108,7 @@ print_colored() {
 _git() {
   if [ "$noop" == "true" ]; then
     # pull has --dry-run and remote is a noop. So execute command.
-    print_colored "git \"$@\"" | indent_output
+    print_colored "git \"$*\"" | indent_output
     command git "$@" | indent_output
   elif [ "$quiet" = "true" ]; then
     # mute stdout and stderr
@@ -157,13 +150,6 @@ jlenv_update jlenv
 # Loop over installed plugins.
 shopt -s nullglob
 for plugin in "$JLENV_ROOT"/plugins/*; do
-  # if [ "$verbose" = "true" ]; then
-  #   header="===[$plugin]==================================================================="
-  #   header="${header:0:72}"
-  #   header="${header/[/[${YELLOW}}"
-  #   header="${header/]/${GREEN}]}"
-  #   echo -e "${GREEN}${header}${NORMAL}"
-  # fi
 
   pushd "$plugin" >/dev/null
     #jlenv_update "$(basename "$plugin")" || failed_plugins="$failed_plugins $plugin"
@@ -175,19 +161,3 @@ shopt -u nullglob
 unset _GIT_QUIET
 unset _GIT_VERBOSE
 unset _GIT_NOOP
-# if [ -n "$failed_plugins" ]; then
-#   if [ -n "$noop" ]; then
-#     # print would-be command
-#     echo -e "${RED}FAILED IN:${failed_plugins}${NORMAL}" | indent_output
-#   elif [ -n "$quiet" ]; then
-#     # mute stdout and stderr
-#     echo -e "${RED}FAILED IN:${failed_plugins}${NORMAL}" &>/dev/null
-#   elif [ -n "$verbose" ]; then
-#     # indent stdout and stderr
-#     echo -e "${RED}FAILED IN:${failed_plugins}${NORMAL}" 2>&1 | indent_output
-#   else
-#     # mute stdout, indent stderr
-#     echo -e "${RED}FAILED IN:${failed_plugins}${NORMAL}" 2>&1 >/dev/null | indent_output
-#   fi
-#   exit 1
-# fi

@@ -8,10 +8,9 @@ shell="$(basename "${JLENV_SHELL:-$SHELL}")"
 for arg; do
   case "$arg" in
   -n | --noop ) noop=true ;;
-  -v | --verbose ) verbose=true ;;
   -q | --quiet | --silent ) quiet=true ;;
   * )
-    echo "command jlenv update $@"
+    echo "command jlenv update $*"
     exit ;;
   esac
 done
@@ -30,13 +29,13 @@ colorize() {
 
 case "$shell" in
   fish )
-    echo "if command jlenv update $@"
+    echo "if command jlenv update $*"
       if [ -z "$quiet" ]; then colorize "Reloading jlenv\n"; fi
       if [ -z "$noop" ];  then echo "  source (jlenv init -|psub)"; fi
       if [ -z "$quiet" ]; then colorize " | " "done\n"; fi
     echo "end" ;;
   * )
-    echo "if command jlenv update $@; then"
+    echo "if command jlenv update $*; then"
       if [ -z "$quiet" ]; then colorize "Reloading jlenv\n"; fi
       if [ -z "$noop" ];  then echo "  eval \"\$(jlenv init -)\";"; fi
       if [ -z "$quiet" ]; then colorize " | " "done\n"; fi
