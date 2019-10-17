@@ -7,7 +7,8 @@ command that updates jlenv and all installed plugins.
 
 ## Installation
 
-To install jlenv-update, clone this repository into your jlenv plugins directory.
+To install jlenv-update, clone this repository into your jlenv plugins
+directory.
 
 ```bash
 mkdir -p "$(jlenv root)/plugins"
